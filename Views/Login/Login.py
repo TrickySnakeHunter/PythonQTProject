@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.uic import loadUi
 import mysql.connector
-
+from Models.DbModel import DbModel
 from Views.Sigin.Sigin import Sigin
 
 class Login(QMainWindow):
@@ -17,29 +17,19 @@ class Login(QMainWindow):
 
         # Підключення до бази даних MySQL
         try:
-            db_connection = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="",
-                database="dolonka"
-            )
-            cursor = db_connection.cursor()
-
-            # Перевірка існування користувача в базі даних
-            query = "SELECT * FROM userdolonka WHERE name = %s AND pswd = %s"
-            cursor.execute(query, (username, password))
-            user = cursor.fetchone()
+            db=DbModel()
+            user=db.checkUser(username,password)
+            msg=db.statusUser(username,password)
 
             if user:
-                QMessageBox.information(self, "Login Successful", "Welcome, " + username)
+                QMessageBox.information(self, msg["head"],msg["body"])
                 # Додайте код для відкриття головного вікна програми або виконайте інші дії для авторизованого користувача
             else:
-                QMessageBox.warning(self, "Login Failed", "Invalid username or password.")
+                QMessageBox.warning(self, msg["head"],msg["body"])
                 self.NameEdit.clear()
                 self.PswdEdit.clear()
                 self.open_register_window()
-            cursor.close()
-            db_connection.close()
+            db.closeCon()
         except mysql.connector.Error as e:
             QMessageBox.critical(self, "Database Error", f"Failed to connect to the database: {e}")
 
